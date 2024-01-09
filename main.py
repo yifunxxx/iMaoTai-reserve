@@ -86,7 +86,7 @@ def execTask():
 
     # 推送消息
     process.send_msg(s_title, s_content)
-execTask
+execTask()
 # schedule.every().day.at("09:20:00").do(execTask)
 
 # while True:
