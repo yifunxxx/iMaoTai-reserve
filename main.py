@@ -35,13 +35,13 @@ def execTask():
 
     aes_key = privateCrypt.get_aes_key()
 
-    s_title = '茅台预约成功'
-    s_content = ""
+    qqMsgDetails = '@everyone \n'
 
     for section in configs.sections():
         if (configs.get(section, 'enddate') != 9) and (TODAY > configs.get(section, 'enddate')):
             continue
         mobile = privateCrypt.decrypt_aes_ecb(section, aes_key)
+        hidemobile = configs.get(section, 'hidemobile')
         province = configs.get(section, 'province')
         city = configs.get(section, 'city')
         token = configs.get(section, 'token')
@@ -56,6 +56,7 @@ def execTask():
         process.init_headers(user_id=userId, token=token, lng=lng, lat=lat)
         # 根据配置中，要预约的商品ID，城市 进行自动预约
         try:
+            
             for item in config.ITEM_CODES:
                 max_shop_id = process.get_location_count(province=province,
                                                         city=city,
@@ -74,18 +75,17 @@ def execTask():
                 reservation_params = process.act_params(max_shop_id, item)
                 # 核心预约步骤
                 r_success, r_content = process.reservation(reservation_params, mobile)
-                # 为了防止漏掉推送异常，所有只要有一个异常，标题就显示失败
                 if not r_success:
-                    s_title = '！！失败！！茅台预约'
-                s_content = s_content + r_content + shopInfo + "\n"
+                    r_content = f'失败！\n原因:{r_content}'
+                qqMsgDetails += f'{hidemobile}: 申购 {title} {r_content}\n'
+
                 # 领取小茅运和耐力值
                 process.getUserEnergyAward(mobile)
         except BaseException as e:
             print(e)
             logging.error(e)
-
-    # 推送消息
-    process.send_msg(s_title, s_content)
+    # 发送qq频道消息
+    process.sendQQMsg(qqMsgDetails[:-1])
 execTask()
 # schedule.every().day.at("09:20:00").do(execTask)
 

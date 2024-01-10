@@ -258,19 +258,16 @@ def reservation(params: dict, mobile: str):
     params.pop('userId')
     responses = requests.post("https://app.moutai519.com.cn/xhr/front/mall/reservation/add", json=params,
                               headers=headers)
-    # if responses.status_code == 401:
-    #     send_msg('！！失败！！茅台预约', f'[{mobile}],登录token失效，需要重新登录')
-    #     raise RuntimeError
 
-    msg = f'预约:{mobile};Code:{responses.status_code};Body:{responses.text};'
+    msg = ''
     logging.info(msg)
 
-    # 如果是成功，推送消息简化；失败消息则全量推送
     if responses.status_code == 200:
         r_success = True
-        msg = f'手机:{mobile};'
+        msg = '成功'
     else:
         r_success = False
+        msg = json.loads(responses.text)["message"]
 
     return r_success, msg
 
@@ -336,3 +333,15 @@ def getUserEnergyAward(mobile: str):
     # response.json().get('message') if '无法领取奖励' in response.text else "领取奖励成功"
     logging.info(
         f'领取耐力 : mobile:{mobile} :  response code : {response.status_code}, response body : {response.text}')
+
+# qq频道发送消息
+def sendQQMsg(details: str) :
+    header = {
+        'Content-Type': 'application/json',
+        'Authorization': f'Bot {config.QQ_BOT_APP_ID}.{config.QQ_BOT_TOKEN}'
+    }
+    content = {
+        "content": details
+    }
+    response = requests.post('https://sandbox.api.sgroup.qq.com/channels/638368367/messages', headers=header, json=content)
+    logging.info(f'发送qq频道消息 : {details}, response body : {response.text}')
